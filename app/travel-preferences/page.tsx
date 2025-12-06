@@ -29,7 +29,7 @@ interface TravelPreference {
 }
 
 export default function TravelPreferencesPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, isDemo } = useAuth()
   const router = useRouter()
   const [preferences, setPreferences] = useState<TravelPreference | null>(null)
   const [loadingPrefs, setLoadingPrefs] = useState(true)
@@ -54,9 +54,39 @@ export default function TravelPreferencesPage() {
 
   useEffect(() => {
     if (user) {
-      fetchPreferences()
+      if (isDemo) {
+        loadDemoPreferences()
+      } else {
+        fetchPreferences()
+      }
     }
-  }, [user])
+  }, [user, isDemo])
+
+  const loadDemoPreferences = () => {
+    const stored = localStorage.getItem('demo_travel_preferences')
+    if (stored) {
+      const data = JSON.parse(stored)
+      setPreferences(data)
+      setFormData({
+        origin: data.origin || '',
+        destination: data.destination || '',
+        startDate: data.startDate ? new Date(data.startDate) : undefined,
+        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        flexibleStartDate: data.flexibleStartDate ? new Date(data.flexibleStartDate) : undefined,
+        flexibleEndDate: data.flexibleEndDate ? new Date(data.flexibleEndDate) : undefined,
+        flexibleDays: data.flexibleDays || [],
+        flexibleMonths: data.flexibleMonths || [],
+        cabinClass: data.cabinClass || '',
+      })
+      setIsFlexible(!!data.flexibleStartDate)
+    }
+    setLoadingPrefs(false)
+  }
+
+  const saveDemoPreferences = (data: any) => {
+    localStorage.setItem('demo_travel_preferences', JSON.stringify(data))
+    setPreferences(data)
+  }
 
   const fetchPreferences = async () => {
     try {
@@ -88,19 +118,27 @@ export default function TravelPreferencesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      const payload = {
-        origin: formData.origin || null,
-        destination: formData.destination || null,
-        startDate: isFlexible ? null : formData.startDate?.toISOString() || null,
-        endDate: isFlexible ? null : formData.endDate?.toISOString() || null,
-        flexibleStartDate: isFlexible ? formData.flexibleStartDate?.toISOString() || null : null,
-        flexibleEndDate: isFlexible ? formData.flexibleEndDate?.toISOString() || null : null,
-        flexibleDays: isFlexible ? formData.flexibleDays : [],
-        flexibleMonths: isFlexible ? formData.flexibleMonths : [],
-        cabinClass: formData.cabinClass || null,
-      }
+    
+    const payload = {
+      origin: formData.origin || null,
+      destination: formData.destination || null,
+      startDate: isFlexible ? null : formData.startDate?.toISOString() || null,
+      endDate: isFlexible ? null : formData.endDate?.toISOString() || null,
+      flexibleStartDate: isFlexible ? formData.flexibleStartDate?.toISOString() || null : null,
+      flexibleEndDate: isFlexible ? formData.flexibleEndDate?.toISOString() || null : null,
+      flexibleDays: isFlexible ? formData.flexibleDays : [],
+      flexibleMonths: isFlexible ? formData.flexibleMonths : [],
+      cabinClass: formData.cabinClass || null,
+    }
 
+    if (isDemo) {
+      // Demo mode: save to localStorage
+      saveDemoPreferences(payload)
+      alert('Travel preferences saved!')
+      return
+    }
+
+    try {
       const response = await fetch('/api/travel-preferences', {
         method: preferences ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },

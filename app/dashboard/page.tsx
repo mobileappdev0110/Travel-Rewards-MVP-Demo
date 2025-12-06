@@ -21,7 +21,7 @@ interface LoyaltyBalance {
 }
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, isDemo } = useAuth()
   const router = useRouter()
   const [balances, setBalances] = useState<LoyaltyBalance[]>([])
   const [loadingBalances, setLoadingBalances] = useState(true)
@@ -40,9 +40,35 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      fetchBalances()
+      if (isDemo) {
+        loadDemoBalances()
+      } else {
+        fetchBalances()
+      }
     }
-  }, [user])
+  }, [user, isDemo])
+
+  const loadDemoBalances = () => {
+    // Load from localStorage in demo mode
+    const stored = localStorage.getItem('demo_balances')
+    if (stored) {
+      setBalances(JSON.parse(stored))
+    } else {
+      // Set some demo data
+      const demoData: LoyaltyBalance[] = [
+        { id: '1', type: 'credit_card', programName: 'Chase', balance: 150000 },
+        { id: '2', type: 'airline', programName: 'United', balance: 85000 },
+      ]
+      setBalances(demoData)
+      localStorage.setItem('demo_balances', JSON.stringify(demoData))
+    }
+    setLoadingBalances(false)
+  }
+
+  const saveDemoBalances = (newBalances: LoyaltyBalance[]) => {
+    localStorage.setItem('demo_balances', JSON.stringify(newBalances))
+    setBalances(newBalances)
+  }
 
   const fetchBalances = async () => {
     try {
@@ -60,6 +86,22 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (isDemo) {
+      // Demo mode: save to localStorage
+      const newBalance: LoyaltyBalance = {
+        id: Date.now().toString(),
+        type: formData.type,
+        programName: formData.programName,
+        balance: parseInt(formData.balance),
+      }
+      const updated = [...balances, newBalance]
+      saveDemoBalances(updated)
+      setIsDialogOpen(false)
+      setFormData({ type: 'credit_card', programName: '', balance: '' })
+      return
+    }
+
     try {
       const response = await fetch('/api/balances', {
         method: 'POST',
@@ -81,6 +123,13 @@ export default function DashboardPage() {
   }
 
   const handleDelete = async (id: string) => {
+    if (isDemo) {
+      // Demo mode: remove from localStorage
+      const updated = balances.filter(b => b.id !== id)
+      saveDemoBalances(updated)
+      return
+    }
+
     try {
       const response = await fetch(`/api/balances/${id}`, {
         method: 'DELETE',

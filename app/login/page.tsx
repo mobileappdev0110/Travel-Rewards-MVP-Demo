@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { isDemoMode, enableDemoMode } from '@/lib/demo-mode'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,8 +16,15 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
+  const isDemo = isDemoMode()
 
   useEffect(() => {
+    // In demo mode, auto-login
+    if (isDemo) {
+      router.push('/dashboard')
+      return
+    }
+
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && inviteToken) {
@@ -26,7 +34,12 @@ function LoginForm() {
         router.push('/dashboard')
       }
     })
-  }, [inviteToken, router])
+  }, [inviteToken, router, isDemo])
+
+  const handleDemoLogin = () => {
+    enableDemoMode()
+    router.push('/dashboard')
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,6 +97,19 @@ function LoginForm() {
               {loading ? 'Sending...' : 'Send Magic Link'}
             </Button>
           </form>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm text-muted-foreground text-center mb-2">
+              Want to see a demo?
+            </p>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleDemoLogin}
+            >
+              Enter Demo Mode
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

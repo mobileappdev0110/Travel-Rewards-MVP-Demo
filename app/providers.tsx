@@ -2,20 +2,37 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { isDemoMode, getDemoUser } from '@/lib/demo-mode'
 import type { User } from '@supabase/supabase-js'
 
 type AuthContextType = {
   user: User | null
   loading: boolean
+  isDemo: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true })
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true, isDemo: false })
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isDemo, setIsDemo] = useState(false)
 
   useEffect(() => {
+    // Check for demo mode first
+    if (isDemoMode()) {
+      setIsDemo(true)
+      // Create a mock user object that matches Supabase User type
+      const demoUser = getDemoUser()
+      setUser({
+        id: demoUser.id,
+        email: demoUser.email,
+        user_metadata: { name: demoUser.name },
+      } as User)
+      setLoading(false)
+      return
+    }
+
     // Check if we're in a browser environment and Supabase is configured
     if (typeof window === 'undefined') {
       setLoading(false)
@@ -48,7 +65,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, isDemo }}>
       {children}
     </AuthContext.Provider>
   )

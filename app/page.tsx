@@ -3,11 +3,12 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from './providers'
+import { isDemoMode, enableDemoMode } from '@/lib/demo-mode'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 export default function HomePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, isDemo } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -15,6 +16,11 @@ export default function HomePage() {
       router.push('/dashboard')
     }
   }, [user, loading, router])
+
+  const handleDemoMode = () => {
+    enableDemoMode()
+    window.location.reload()
+  }
 
   if (loading) {
     return (
@@ -41,9 +47,14 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground max-w-2xl">
             Manage your loyalty balances, set travel dates, and discover the best redemption opportunities.
           </p>
-          <Link href="/login">
-            <Button size="lg">Get Started</Button>
-          </Link>
+          <div className="flex gap-4 justify-center">
+            <Link href="/login">
+              <Button size="lg">Get Started</Button>
+            </Link>
+            <Button size="lg" variant="outline" onClick={handleDemoMode}>
+              View Demo
+            </Button>
+          </div>
         </div>
       </main>
     </div>
