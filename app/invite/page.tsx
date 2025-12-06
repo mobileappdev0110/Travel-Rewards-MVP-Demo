@@ -58,7 +58,7 @@ export default function InvitePage() {
           <CardHeader>
             <CardTitle>Generate Invite Link</CardTitle>
             <CardDescription>
-              Share this link with your travel companion. They'll see your trip details and can join you!
+              Share this link with your travel companion. They&apos;ll see your trip details and can join you!
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

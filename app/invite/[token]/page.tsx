@@ -28,10 +28,6 @@ export default function InviteViewPage({ params }: { params: { token: string } }
   const [loadingInvite, setLoadingInvite] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    fetchInvite()
-  }, [params.token])
-
   const fetchInvite = async () => {
     try {
       const response = await fetch(`/api/invites/${params.token}`)
@@ -48,6 +44,11 @@ export default function InviteViewPage({ params }: { params: { token: string } }
       setLoadingInvite(false)
     }
   }
+
+  useEffect(() => {
+    fetchInvite()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.token])
 
   const handleAccept = () => {
     if (user) {
@@ -124,7 +125,7 @@ export default function InviteViewPage({ params }: { params: { token: string } }
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>You're Invited!</CardTitle>
+          <CardTitle>You&apos;re Invited!</CardTitle>
           <CardDescription>
             Your travel companion has invited you to join their trip.
           </CardDescription>
