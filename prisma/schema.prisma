@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  supabaseId    String    @unique
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  loyaltyBalances LoyaltyBalance[]
+  travelPreferences TravelPreference[]
+  invites         Invite[] @relation("Inviter")
+  receivedInvites Invite[] @relation("Invitee")
+}
+
+model LoyaltyBalance {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        String   // "credit_card" or "airline"
+  programName String   // e.g., "Chase", "United", "Delta"
+  balance     Int      // points/miles balance
+  currency    String?  // optional currency code
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+model TravelPreference {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  origin      String?
+  destination String?
+  
+  // Specific dates
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Flexible date ranges
+  flexibleStartDate DateTime?
+  flexibleEndDate   DateTime?
+  flexibleDays      String[] // e.g., ["weekend", "friday", "saturday"]
+  flexibleMonths    Int[]    // e.g., [7] for July
+  
+  cabinClass  String?  // "economy", "business", "first"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+model Deal {
+  id          String   @id @default(uuid())
+  
+  airlineName String
+  origin      String
+  destination String
+  date        DateTime
+  cabinClass  String   // "economy", "business", "first"
+  pointCost   Int
+  cashCost    Decimal
+  isBestMatch Boolean  @default(false)
+  bookingUrl  String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Invite {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  
+  inviterId   String
+  inviter     User     @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  inviteeId   String?
+  invitee     User?    @relation("Invitee", fields: [inviteeId], references: [id], onDelete: SetNull)
+  
+  // Trip details from inviter's travel preferences
+  origin      String?
+  destination String?
+  startDate   DateTime?
+  endDate     DateTime?
+  flexibleStartDate DateTime?
+  flexibleEndDate   DateTime?
+  flexibleDays      String[]
+  flexibleMonths    Int[]
+  cabinClass  String?
+  
+  isUsed      Boolean  @default(false)
+  usedAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([token])
+  @@index([inviterId])
+}
+
