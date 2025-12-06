@@ -28,6 +28,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         id: demoUser.id,
         email: demoUser.email,
         user_metadata: { name: demoUser.name },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        phone: null,
+        confirmed_at: new Date().toISOString(),
+        email_confirmed_at: new Date().toISOString(),
+        phone_confirmed_at: null,
+        last_sign_in_at: new Date().toISOString(),
+        role: 'authenticated',
+        identities: [],
       } as User)
       setLoading(false)
       return
