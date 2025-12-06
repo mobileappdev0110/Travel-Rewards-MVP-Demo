@@ -16,9 +16,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if we're in a browser environment and Supabase is configured
+    if (typeof window === 'undefined') {
+      setLoading(false)
+      return
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('xxxxxxxxxxxxx') || supabaseUrl.includes('placeholder')) {
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      setLoading(false)
+    }).catch(() => {
       setLoading(false)
     })
 

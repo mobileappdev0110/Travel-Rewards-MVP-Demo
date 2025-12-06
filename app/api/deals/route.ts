@@ -71,8 +71,19 @@ const MOCK_DEALS = [
   },
 ]
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
+    // If DATABASE_URL is not available, return mock data directly
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(MOCK_DEALS.map(deal => ({
+        id: `mock-${deal.airlineName}-${deal.date.getTime()}`,
+        ...deal,
+        date: deal.date.toISOString(),
+      })))
+    }
+
     // Check if we have any deals in the database
     const existingDeals = await prisma.deal.findMany({
       take: 1,
@@ -95,7 +106,12 @@ export async function GET() {
     return NextResponse.json(deals)
   } catch (error) {
     console.error('Error fetching deals:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Return mock data as fallback
+    return NextResponse.json(MOCK_DEALS.map(deal => ({
+      id: `mock-${deal.airlineName}-${deal.date.getTime()}`,
+      ...deal,
+      date: deal.date.toISOString(),
+    })))
   }
 }
 
